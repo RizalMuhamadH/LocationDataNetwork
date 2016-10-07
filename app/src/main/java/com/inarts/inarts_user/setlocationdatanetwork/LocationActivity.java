@@ -11,6 +11,9 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.wifi.WifiManager;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
@@ -31,6 +34,7 @@ public class LocationActivity extends AppCompatActivity {
     private TextView address;
 
     LocationManager locationManager;
+    ConnectivityManager connectivityManager;
 
     private double lat,lng;
 
@@ -45,6 +49,8 @@ public class LocationActivity extends AppCompatActivity {
     String postalCode;
     String knownName;
 
+    boolean connected = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,7 +59,9 @@ public class LocationActivity extends AppCompatActivity {
         btn = (Button) findViewById(R.id.btn);
         address = (TextView)findViewById(R.id.address);
         geocoder = new Geocoder(this,Locale.getDefault());
+
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
 
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -62,23 +70,29 @@ public class LocationActivity extends AppCompatActivity {
                 progressDialog.setMessage("Please Wait...");
                 progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
                 progressDialog.show();
-                locationNetwork();
+                if (isLocationEnabled() == true){
+                    locationNetwork();
+                }else {
+                    alert();
+                }
+
             }
         });
     }
-
     private void alert() {
+        progressDialog.dismiss();
         final AlertDialog.Builder dialog = new AlertDialog.Builder(this);
-        dialog.setTitle("Enable Location")
-                .setMessage("Your Locations Settings is set to 'Off'.\nPlease Enable Location to " +
-                        "use this app")
-                .setPositiveButton("Location Settings", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface paramDialogInterface, int paramInt) {
-                        Intent myIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                        startActivity(myIntent);
-                    }
-                })
+        dialog.setTitle("Alert")
+                .setMessage("Your Does Connected to Internet.\nPlease Check Internet Setting ")
+//                .setPositiveButton("Location Settings", new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface paramDialogInterface, int paramInt) {
+//                        Intent myIntent = new Intent(Settings.ACTION_SETTINGS);
+//                        startActivity(myIntent);
+//                        WifiManager wifiManager = (WifiManager)getSystemService(Context.WIFI_SERVICE);
+//                        wifiManager.setWifiEnabled(true);
+//                    }
+//                })
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface paramDialogInterface, int paramInt) {
@@ -88,19 +102,18 @@ public class LocationActivity extends AppCompatActivity {
     }
 
     private boolean isLocationEnabled() {
-        return locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-    }
-
-    private boolean checkConnection() {
-        if (!isLocationEnabled())
-            alert();
-        return isLocationEnabled();
-
+        if(connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).getState() == NetworkInfo.State.CONNECTED ||
+                connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState() == NetworkInfo.State.CONNECTED) {
+            //we are connected to a network
+            locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+            connected = true;
+        }
+        else
+            connected = false;
+        return connected;
     }
 
     private void locationNetwork() {
-        if (!checkConnection())
-            return;
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
@@ -129,6 +142,10 @@ public class LocationActivity extends AppCompatActivity {
                 country = addresses.get(0).getCountryName();
                 postalCode = addresses.get(0).getPostalCode();
                 knownName = addresses.get(0).getFeatureName();
+                addresses.get(0).
+                if (addresses == null){
+                    alert();
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
