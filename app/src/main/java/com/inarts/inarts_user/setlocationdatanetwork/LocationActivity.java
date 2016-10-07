@@ -142,7 +142,6 @@ public class LocationActivity extends AppCompatActivity {
                 country = addresses.get(0).getCountryName();
                 postalCode = addresses.get(0).getPostalCode();
                 knownName = addresses.get(0).getFeatureName();
-                addresses.get(0).
                 if (addresses == null){
                     alert();
                 }
